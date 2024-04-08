@@ -1,7 +1,7 @@
 def main():
     inp = float(input())
 
-    # a^N = N ->
+    # a^N = N
     if inp == 1:
         print(float(1))
     else:
