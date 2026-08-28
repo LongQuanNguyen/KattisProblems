@@ -30,9 +30,9 @@ def count_walk(x, y, remaining_steps, dict_cache):
 
 def main():
     n = int(input())
+    dict_cache = {}
     for i in range(0,n):
         steps = int(input())
-        dict_cache = {}
         print(count_walk(0, 0, steps, dict_cache))
 
 if __name__ == "__main__":
