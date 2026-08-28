@@ -26,6 +26,7 @@ def count_walk(x, y, remaining_steps, dict_cache):
     for dx, dy in directions:
         total_walks += count_walk(x + dx, y + dy, remaining_steps - 1, dict_cache)
 
+    dict_cache[state] = total_walks
     return  total_walks
 
 def main():
