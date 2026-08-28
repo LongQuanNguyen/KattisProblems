@@ -14,15 +14,18 @@ def get_freq_dict(int_list):
 
 def count_triples(freq_dict):
     ways = 0
-    for value_i, freq_i in freq_dict.items():
-        for value_j, freq_j in freq_dict.items():
+    dict_list = list(freq_dict.items())
+
+    for dict_idx, (value_i, freq_i) in enumerate(dict_list):
+        for value_j, freq_j in dict_list[dict_idx:]:
             value_k = value_i + value_j
-            if value_k not in freq_dict:
-                continue
 
             choices_i = freq_i
             choices_j = freq_j
-            choices_k = freq_dict.get(value_k)
+            choices_k = freq_dict.get(value_k, 0)
+
+            if choices_k == 0:
+                continue
 
             if value_i == value_j:
                 choices_j -= 1
@@ -33,7 +36,13 @@ def count_triples(freq_dict):
             if value_k == value_j:
                 choices_k -= 1
 
-            ways += choices_i * choices_j * choices_k
+            if choices_j <= 0 or choices_k <= 0:
+                continue
+
+            if value_i != value_j:
+                ways += 2 * choices_i * choices_j * choices_k
+            else:
+                ways += choices_i * choices_j * choices_k
 
     return ways
 
