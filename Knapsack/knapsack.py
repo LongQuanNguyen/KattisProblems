@@ -1,25 +1,55 @@
+def maximize_value(idx, capacity, num_items, item_weights, item_values, cache):
+    if idx == num_items or capacity == 0:
+        cache[(idx, capacity)] = 0, False
+        return 0
+
+    if (idx, capacity) in cache:
+        return cache[(idx, capacity)][0]
+
+    skip = maximize_value(idx + 1, capacity, num_items, item_weights, item_values, cache)
+
+    if item_weights[idx] > capacity:
+        cache[(idx, capacity)] = skip, False
+        return skip
+
+    take = item_values[idx] + maximize_value(idx + 1, capacity - item_weights[idx], num_items, item_weights, item_values, cache)
+    cache[(idx, capacity)] = max(take, skip), take >= skip
+    return cache[(idx, capacity)][0]
+
+
+def reconstruct_indices_of_optimal(capacity, num_items, cache, item_weights):
+    chosen_indices = []
+    i = 0
+    cap = capacity
+    while i < num_items:
+        value, is_taken = cache[(i, cap)]
+
+        if is_taken:
+            chosen_indices.append(i)
+            cap -= item_weights[i]
+
+        i += 1
+    return  chosen_indices
+
+
 def main():
     while True:
         try:
-            item_weight= []
-            value_weight_ratio = {}
+            item_weights = []
+            item_values = []
+            cache = {}
 
-            capacity, n = map(int, input().split())
-            for idx in range(n):
+            capacity, num_items = map(int, input().split())
+            for idx in range(num_items):
                 value, weight = map(int, input().split())
-                item_weight.append(weight)
-                value_weight_ratio[idx] = value / weight
+                item_weights.append(weight)
+                item_values.append(value)
 
-            sorted_value_weight_desc = dict(sorted(value_weight_ratio.items(), key=lambda item: item[1], reverse=True))
-            chosen_indices = []
-            total_weight = 0
-            for idx, ratio in sorted_value_weight_desc.items():
-                if item_weight[idx] + total_weight <= capacity:
-                    chosen_indices.append(idx)
-                    total_weight += item_weight[idx]
+            maximize_value(0, capacity, num_items, item_weights, item_values, cache)
 
-            print(len(chosen_indices))
-            print(" ".join(map(str, chosen_indices)))
+            indices = reconstruct_indices_of_optimal(capacity, num_items, cache, item_weights)
+            print(len(indices))
+            print(" ".join(map(str, indices)))
 
         except EOFError:
             break
