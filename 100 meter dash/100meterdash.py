@@ -7,17 +7,57 @@ def distance(x_1, y_1, x_2, y_2):
 def speed(d, t):
     return float(d) / t
 
+def interpolate_time_at_distance_x(x, idx, cum_dist, cum_time):
+    d1, d2 = cum_dist[idx], cum_dist[idx + 1]
+    t1, t2 = cum_time[idx], cum_time[idx + 1]
+    seg_speed = (d2 - d1) / (t2 - t1)
+    return t1 + (x - d1) / seg_speed
 
-def time_at_distance(x, cum_dist, cum_time):
-    for i in range(1, len(cum_dist)):
-        if x <= cum_dist[i]:
-            d1, d2 = cum_dist[i - 1], cum_dist[i]
-            t1, t2 = cum_time[i - 1], cum_time[i]
 
-            seg_speed = speed(d2 - d1, t2 - t1)
+def best_100m_start_at_reading(cum_dist, cum_time):
+    right = 0
+    best = MAX_TIME
+    length = len(cum_dist)
 
-            return t1 + (x - d1) / seg_speed
-    return MAX_TIME
+    for left in range(length):
+        if right < left:
+            right = left
+
+        target = cum_dist[left] + 100
+
+        while right < length and cum_dist[right] < target:
+            right += 1
+
+        if right == length:
+            break
+
+        time_at_target = interpolate_time_at_distance_x(target, right - 1, cum_dist, cum_time)
+        window_time = time_at_target - cum_time[left]
+        best = min(window_time, best)
+
+    return best
+
+
+def best_100m_end_at_reading(cum_dist, cum_time):
+    left = 0
+    best = MAX_TIME
+    length = len(cum_dist)
+
+    for right in range(length):
+        target = cum_dist[right] - 100
+        if target < 0:
+            continue
+        while cum_dist[left] < target:
+            left += 1
+
+        if target == cum_dist[left]:
+            time_at_target = cum_time[left]
+        else:
+            time_at_target = interpolate_time_at_distance_x(target, left - 1 , cum_dist, cum_time)
+        window_time = cum_time[right] - time_at_target
+        best = min(window_time, best)
+
+    return best
 
 
 def main():
@@ -32,13 +72,7 @@ def main():
         cum_time.append(t)
         prev_x, prev_y = x, y
 
-    best = MAX_TIME
-    for d in cum_dist:
-        best = min(best, time_at_distance(d + 100, cum_dist, cum_time) - time_at_distance(d, cum_dist, cum_time))
-        if d >= 100:
-            best = min(best, time_at_distance(d, cum_dist, cum_time) - time_at_distance(d - 100, cum_dist, cum_time))
-
-    print(best)
+    print(min(best_100m_start_at_reading(cum_dist, cum_time), best_100m_end_at_reading(cum_dist, cum_time)))
 
 
 if __name__ == "__main__":
