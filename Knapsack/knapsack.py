@@ -1,35 +1,42 @@
-def maximize_value(idx, capacity, num_items, item_weights, item_values, cache):
-    if idx == num_items or capacity == 0:
-        cache[(idx, capacity)] = 0, False
-        return 0
-
-    if (idx, capacity) in cache:
-        return cache[(idx, capacity)][0]
-
-    skip = maximize_value(idx + 1, capacity, num_items, item_weights, item_values, cache)
-
-    if item_weights[idx] > capacity:
-        cache[(idx, capacity)] = skip, False
-        return skip
-
-    take = item_values[idx] + maximize_value(idx + 1, capacity - item_weights[idx], num_items, item_weights, item_values, cache)
-    cache[(idx, capacity)] = max(take, skip), take >= skip
-    return cache[(idx, capacity)][0]
+def inspect_matrix(matrix):
+    for row in matrix:
+        print(row)
 
 
-def reconstruct_indices_of_optimal(capacity, num_items, cache, item_weights):
-    chosen_indices = []
-    i = 0
-    cap = capacity
-    while i < num_items:
-        value, is_taken = cache[(i, cap)]
+def bottom_up_dp(optimal_val_table, optimal_take_table, item_weights, item_values, num_items, capacity):
+    for i in range(1, num_items + 1):
+        i_value = item_values[i - 1]
+        i_weights = item_weights[i - 1]
+        for c in range(capacity + 1):
 
-        if is_taken:
-            chosen_indices.append(i)
-            cap -= item_weights[i]
+            # Skip mean use prev row value
+            skip_value = optimal_val_table[i - 1][c]
 
-        i += 1
-    return  chosen_indices
+            if i_weights > c:
+                optimal_val_table[i][c] = skip_value
+            else:
+                take_value = i_value + optimal_val_table[i - 1][c - i_weights]
+
+                if take_value > skip_value:
+                    optimal_take_table[i][c] = True
+                    optimal_val_table[i][c] = take_value
+                else:
+                    optimal_val_table[i][c] = skip_value
+
+
+def get_optimal_item_indices(optimal_take_table, num_items, capacity, item_weights):
+    i = num_items
+    c = capacity
+    indices = []
+
+    while i > 0:
+        if optimal_take_table[i][c]:
+            indices.append(i - 1)
+            c -= item_weights[i - 1]
+
+        i -= 1
+
+    return indices
 
 
 def main():
@@ -37,7 +44,6 @@ def main():
         try:
             item_weights = []
             item_values = []
-            cache = {}
 
             capacity, num_items = map(int, input().split())
             for idx in range(num_items):
@@ -45,9 +51,14 @@ def main():
                 item_weights.append(weight)
                 item_values.append(value)
 
-            maximize_value(0, capacity, num_items, item_weights, item_values, cache)
+            optimal_val_table = [[0] * (capacity + 1) for _ in range(num_items + 1)]
+            optimal_take_table = [[False] * (capacity + 1) for _ in range(num_items + 1)]
 
-            indices = reconstruct_indices_of_optimal(capacity, num_items, cache, item_weights)
+            bottom_up_dp(optimal_val_table, optimal_take_table, item_weights, item_values, num_items, capacity)
+            #inspect_matrix(optimal_val_table)
+            #inspect_matrix(optimal_take_table)
+            indices = get_optimal_item_indices(optimal_take_table, num_items, capacity, item_weights)
+
             print(len(indices))
             print(" ".join(map(str, indices)))
 
